@@ -21,6 +21,50 @@ const getAllProducts = (db) => (req, res) => {
   });
 };
 
+//Hàm xử lú logic API GET /api/sanpham/:MaSP
+const getProductDetail = (db) => async (req, res) => {
+  const { MaSP } = req.params;
+
+  if (!MaSP) {
+    return res.status(400).json({
+      success: false,
+      message: "Thiếu MaSP trong yêu cầu",
+    });
+  }
+
+  try {
+    const [results] = await db.promise().query(
+      `
+      SELECT sanpham.MaSP, loai.TenLoai, sanpham.TenSP, sanpham.Anh, 
+             sanpham.GiaBan, sanpham.SLTon, sanpham.MoTa
+      FROM sanpham
+      JOIN loai ON sanpham.MaLoai = loai.MaLoai
+      WHERE sanpham.MaSP = ?
+    `,
+      [MaSP]
+    );
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sản phẩm với MaSP đã cung cấp",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: results[0],
+    });
+  } catch (err) {
+    console.error("Lỗi khi truy vấn cơ sở dữ liệu: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi truy vấn cơ sở dữ liệu",
+    });
+  }
+};
+
 module.exports = {
   getAllProducts,
+  getProductDetail: getProductDetail,
 };
