@@ -39,8 +39,8 @@ const getUserByCredentials = (db) => async (req, res) => {
         username: user.TaiKhoan,
         email: user.Email,
       },
-      process.env.JWT_SECRET, // Secret key
-      { expiresIn: "30s" } // Token hết hạn sau 30s
+      process.env.JWT_SECRET // Secret key
+      //{ expiresIn: "30s" } // Token hết hạn sau 30s
     );
 
     // Trả về accessToken và thông tin khách hàng

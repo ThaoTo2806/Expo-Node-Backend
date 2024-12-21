@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const productController = require("./controllers/productCTL");
 const userController = require("./controllers/userCTL");
+const cartController = require("./controllers/cartCTL");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -31,6 +32,8 @@ db.connect((err) => {
 app.get("/api/sanpham", productController.getAllProducts(db));
 app.get("/api/sanpham/:MaSP", productController.getProductDetail(db));
 app.post("/api/khachhang/dangnhap", userController.getUserByCredentials(db));
+app.post("/api/giohang", cartController.addToCart()); // Thêm sản phẩm vào giỏ hàng
+app.get("/api/giohang", cartController.getCart()); // Lấy giỏ hàng
 
 app.listen(port, host, () => {
   console.log(`Server đang chạy tại http://${host}:${port}`);
