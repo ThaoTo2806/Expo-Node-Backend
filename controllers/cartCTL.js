@@ -78,9 +78,21 @@ const getCart = () => (req, res) => {
     const userId = decoded.id;
     const userCart = carts.get(userId) || [];
 
+    // Tính số lượng sản phẩm có mã khác nhau
+    const distinctProductCount = userCart.length;
+
+    // Tính tổng tiền
+    const totalAmount = userCart.reduce(
+      (sum, product) => sum + product.SoLuong * product.GiaBan,
+      0
+    );
+
+    // Trả về giỏ hàng cùng với số lượng sản phẩm và tổng tiền
     res.status(200).json({
       success: true,
       cart: userCart,
+      distinctProductCount,
+      totalAmount,
     });
   } catch (err) {
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
