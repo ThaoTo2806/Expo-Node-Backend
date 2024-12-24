@@ -34,6 +34,7 @@ app.get("/api/sanpham/:MaSP", productController.getProductDetail(db));
 app.post("/api/khachhang/dangnhap", userController.getUserByCredentials(db));
 app.post("/api/giohang", cartController.addToCart()); // Thêm sản phẩm vào giỏ hàng
 app.get("/api/giohang", cartController.getCart()); // Lấy giỏ hàng
+app.put("/api/giohang/:productId", cartController.updateCart());
 
 app.listen(port, host, () => {
   console.log(`Server đang chạy tại http://${host}:${port}`);
