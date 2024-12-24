@@ -177,8 +177,69 @@ const updateCart = () => (req, res) => {
   }
 };
 
+const deleteFromCart = () => (req, res) => {
+  const { authorization } = req.headers; // Lấy token từ header
+  const { productId } = req.params; // Lấy mã sản phẩm từ URL
+
+  // Kiểm tra nếu thiếu token hoặc mã sản phẩm
+  if (!authorization || !productId) {
+    return res.status(400).json({
+      success: false,
+      message: "Thiếu thông tin cần thiết trong yêu cầu",
+    });
+  }
+
+  try {
+    // Xác minh token
+    const token = authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Lấy giỏ hàng của người dùng
+    const userId = decoded.id;
+    const userCart = carts.get(userId) || [];
+
+    // Tìm sản phẩm cần xóa
+    const productIndex = userCart.findIndex(
+      (item) => item.MaSP === parseInt(productId)
+    );
+
+    if (productIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Sản phẩm không tồn tại trong giỏ hàng",
+      });
+    }
+
+    // Xóa sản phẩm khỏi giỏ hàng
+    userCart.splice(productIndex, 1);
+
+    // Cập nhật giỏ hàng trong bộ nhớ
+    carts.set(userId, userCart);
+
+    res.status(200).json({
+      success: true,
+      message: "Sản phẩm đã được xóa khỏi giỏ hàng",
+      cart: userCart,
+    });
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Token không hợp lệ hoặc đã hết hạn",
+      });
+    }
+
+    console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi xóa sản phẩm khỏi giỏ hàng",
+    });
+  }
+};
+
 module.exports = {
   addToCart,
   getCart,
   updateCart,
+  deleteFromCart,
 };
