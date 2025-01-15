@@ -237,9 +237,96 @@ const deleteFromCart = () => (req, res) => {
   }
 };
 
+const createOrder = (db) => async (req, res) => {
+  const { NgayDat, DaThanhToan, TinhTrangGiao, MaKH } = req.body;
+  const { authorization } = req.headers;
+
+  // Kiểm tra các trường bắt buộc
+  if (!NgayDat || DaThanhToan === undefined || !TinhTrangGiao || !MaKH) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  // Kiểm tra token
+  if (!authorization) {
+    return res.status(400).json({ message: "Missing authorization token" });
+  }
+
+  try {
+    // Xác minh token
+    const token = authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Lấy giỏ hàng của người dùng
+    const userId = decoded.id;
+    const userCart = carts.get(userId) || [];
+
+    if (userCart.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    // Tính toán ngày giao hàng
+    const ngayDatDate = new Date(NgayDat);
+    const ngayGiaoDate = new Date(ngayDatDate);
+    ngayGiaoDate.setDate(ngayDatDate.getDate() + 3);
+    const NgayGiao = ngayGiaoDate.toISOString().split("T")[0];
+
+    // Thực hiện truy vấn để tạo đơn hàng
+    const orderSql = `INSERT INTO donhang (NgayDat, NgayGiao, DaThanhToan, TinhTrangGiao, MaKH) VALUES (?, ?, ?, ?, ?)`;
+    const orderValues = [NgayDat, NgayGiao, DaThanhToan, TinhTrangGiao, MaKH];
+
+    db.query(orderSql, orderValues, (err, orderResult) => {
+      if (err) {
+        console.error("Error inserting order:", err);
+        return res
+          .status(500)
+          .json({ message: "Error creating order", error: err });
+      }
+
+      const newOrderId = orderResult.insertId;
+      const detailsSql = `INSERT INTO chitietdonhang (MaDonHang, MaSP, SoLuong, DonGia) VALUES ?`;
+      const detailsValues = userCart.map((product) => [
+        newOrderId,
+        product.MaSP,
+        product.SoLuong,
+        product.GiaBan,
+      ]);
+
+      // Thực hiện truy vấn để tạo chi tiết đơn hàng
+      db.query(detailsSql, [detailsValues], (err) => {
+        if (err) {
+          console.error("Error inserting order details:", err);
+          return res
+            .status(500)
+            .json({ message: "Error creating order details", error: err });
+        }
+
+        // Xóa giỏ hàng sau khi tạo đơn hàng thành công
+        carts.delete(userId);
+
+        // Trả về thông tin đơn hàng đã tạo
+        res.status(201).json({
+          message: "Order created successfully",
+          order: {
+            MaDonHang: newOrderId,
+            NgayDat,
+            NgayGiao,
+            DaThanhToan,
+            TinhTrangGiao,
+            MaKH,
+          },
+        });
+      });
+    });
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
 module.exports = {
   addToCart,
   getCart,
   updateCart,
   deleteFromCart,
+  createOrder,
 };
