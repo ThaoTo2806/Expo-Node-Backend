@@ -144,7 +144,7 @@ const updateCart = () => (req, res) => {
 
     // Cập nhật số lượng
     if (SoLuong > 0) {
-      product.SoLuong = SoLuong;
+      product.SoLuong += SoLuong;
     } else {
       // Nếu số lượng <= 0, xóa sản phẩm khỏi giỏ hàng
       const index = userCart.indexOf(product);

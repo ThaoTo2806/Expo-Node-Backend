@@ -1,16 +1,19 @@
 const express = require("express");
 const mysql = require("mysql2");
+const cors = require("cors");
 require("dotenv").config();
 
 const productController = require("./controllers/productCTL");
 const userController = require("./controllers/userCTL");
 const cartController = require("./controllers/cartCTL");
+const categoryController = require("./controllers/categoryCTL");
 
 const app = express();
 const port = process.env.PORT || 5000;
 const host = "192.168.1.7";
 
 // Middleware để parse JSON
+app.use(cors()); // Thêm dòng này để bật CORS
 app.use(express.json());
 
 // Kết nối database
@@ -54,6 +57,19 @@ app.delete("/api/giohang/:productId", (req, res) =>
 
 app.post("/api/donhang", (req, res) =>
   cartController.createOrder(db)(req, res)
+);
+
+//API Category
+app.get("/api/loaiDT", (req, res) =>
+  categoryController.getLoaiWithDT(db)(req, res)
+);
+
+app.get("/api/loaiLAP", (req, res) =>
+  categoryController.getLoaiWithLAP(db)(req, res)
+);
+
+app.get("/api/loaiPK", (req, res) =>
+  categoryController.getLoaiWithPK(db)(req, res)
 );
 
 app.listen(port, host, () => {
